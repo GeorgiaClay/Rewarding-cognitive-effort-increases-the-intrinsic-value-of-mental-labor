@@ -1,0 +1,292 @@
+---
+title: "Analysis_Exp1"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(readxl)
+library(car)
+library(rstatix)
+library(lmerTest)
+library(effectsize)
+```
+
+# read in data
+
+```{r}
+# Summary data:
+exp1_data <- read.csv("exp1_data.csv") %>%
+  mutate(subject = as.factor(subject),
+         group = as.factor(group))
+
+
+# N-back data:
+
+
+exp1_nback <- readRDS("nback_lab.RDS") # data by trial
+
+nback_pep_long <- read_xlsx("NbackPEPbytime.xlsx") # this dataset has every PEP measurement
+
+nback_pep <- readRDS("nback_pep.RDS") # this dataset has PEP per N-back block
+
+
+# MET data
+
+## data by trial:
+exp1_met_trials <- read.csv("exp1_met_trials.csv") %>%
+  rename(difficulty = currentLevel) %>%
+  mutate(group = as.factor(group),
+         subject = as.factor(subject),
+         trialpercent = trial/50)  %>%
+  select(subject, group, trial, difficulty, correct, trialpercent) %>%
+  left_join(exp1_data[,c('subject', 'math_sc')])
+
+## PEP data:
+met_pep <- readRDS("met_pep.RDS")
+```
+
+# Clean data sets:
+
+## Nback: 
+
+```{r}
+
+# Residualise PEP scores by Nback difficulty, average across each participant
+
+nback_pep_ppt <- nback_pep_long %>% 
+  na.omit() %>%
+  mutate(subject = as.factor(subject), 
+         PEPresid = rstandard(lm(PEP~ nback, data = nback_pep_long))) %>%
+  group_by(subject) %>% 
+  summarise(PEPresid = mean(PEPresid)) 
+
+exp1_data <- left_join(exp1_data, nback_pep_ppt)
+
+# calculate nback performance by block
+
+nback_perf_blocks <- exp1_nback %>%
+  filter(trialcode %in% c("target", "nontarget")) %>%
+  rename(blocknum = values.TotalBlocks) %>%
+  group_by(subject, blocknum) %>%
+  summarise(performance = mean(correct))
+
+# calculate how much reward was gotten in each block:
+
+nback_rewards <- exp1_nback %>%
+  filter(trialcode == "rewardtext") %>%
+  rename(nback = values.N, reward = list.rewardoptions.nextvalue, blocknum = values.TotalBlocks) %>%
+  select(subject, nback, reward, blocknum, group)
+
+# combine datasets with performance, reward, pep:
+
+nback_blocks <- left_join(nback_rewards, nback_pep[,c("subject", "blocknum", "pep")]) %>%
+  left_join(nback_perf_blocks[,c("subject", "blocknum", "performance")]) %>%
+  filter(subject %in% exp1_data$subject) %>%
+  mutate(group = as.factor(group),
+         subject = as.factor(subject),
+         nback = as.factor(nback)) %>%
+  left_join(exp1_data[,c("subject", "math_sc")])
+```
+
+## MET
+
+```{r}
+# calculate PEP per block in MET:
+met_pep_short <- met_pep %>%
+  group_by(subject, block) %>%
+  summarise(pep = mean(PEP), difficulty = mean(Math, na.rm = T))
+
+
+# Add column 'block' to count blocks in exp1_met_trials
+
+exp1_met_trials$block <- NA
+
+x <- exp1_met_trials
+for (i in unique(x$subject)){
+  blocknumber = 1
+  count5 = 0
+  x$block[x$subject == i][1] <- blocknumber #start at block number 1 for each subject
+  for (j in 2:nrow(x[x$subject == i,])) {
+    count5 = count5+1
+    if ((count5 == 5) | (x$difficulty[x$subject == i][j] != x$difficulty[x$subject == i][j - 1])){ # if block number changes or 5 trials at given difficulty level is reached, increase block number by 1
+      blocknumber = blocknumber+1
+      count5 = 0
+    }
+    x$block[x$subject == i][j] <- blocknumber
+  }
+}
+exp1_met_trials <- x
+
+
+# find average correct on each block
+met_block_performance <- exp1_met_trials %>%
+  group_by(subject, group, block, difficulty) %>%
+  summarise(correct = mean(correct)) 
+
+#Join together data frames with performance and PEP data:
+
+met_pep_df <- left_join(met_block_performance, met_pep_short) %>%
+  group_by(subject) %>%
+  left_join(exp1_data[,c("subject", "math_sc")])
+```
+
+
+# Analysis: 
+
+# MET Difficulty choice by group:
+
+```{r}
+
+aov1 <- aov(difficulty ~ math_sc + group, data = exp1_data)
+summary(aov1)
+rstatix::eta_squared(aov1)
+
+# without math self-concept:
+aov1b <- aov(difficulty ~ group, data = exp1_data)
+summary(aov)
+
+exp1_group_difficulty_summary <- exp1_data %>%
+  group_by(group) %>%
+  summarise(mean = mean(difficulty), sd = sd(difficulty))
+
+```
+
+# Difficulty choice across time
+
+```{r}
+mod1 <- lmer(difficulty ~ math_sc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
+             + (trialpercent|subject), data = exp1_met_trials, REML = FALSE)
+summary(mod1)
+```
+
+# PEP predicting difficulty choice
+
+```{r}
+# Group 1:
+cor.test(exp1_data$difficulty[exp1_data$group == 1], exp1_data$PEPresid[exp1_data$group == 1])
+
+# Group 2:
+cor.test(exp1_data$difficulty[exp1_data$group == 2], exp1_data$PEPresid[exp1_data$group == 2])
+
+# anova:
+summary(aov(PEPresid ~ group*difficulty, exp1_data))
+```
+
+
+# MET group difference in effort: 
+
+```{r}
+mod2 <- lmer(pep ~ group + difficulty + block  + (block|subject), met_pep_df)
+summary(mod2)
+anova(mod2)
+```
+
+# MET group difference in performance, logistic multi-level model:
+
+```{r}
+mod3 <- glmer(correct ~ group + difficulty + (difficulty|subject), family = binomial("logit"), data = exp1_met_trials)
+summary(mod3)
+```
+
+
+# Nback analysis of effort, difficulty and performance:
+
+## Effort by block, group and difficulty:
+
+```{r}
+mod4 <- lmer(pep ~ group + blocknum + nback + (blocknum| subject), nback_blocks)
+summary(mod4)
+anova(mod4)
+```
+
+## Performance by block, group, difficulty
+
+```{r}
+mod5 <- lmer(performance ~ nback + group + blocknum + (blocknum|subject), nback_blocks)
+summary(mod5)
+anova(mod5)
+```
+
+## Performance by block, group, effort
+
+```{r}
+mod6 <- lmer(performance ~ pep + group +  blocknum + (blocknum|subject), nback_blocks)
+summary(mod6)
+anova(mod6)
+```
+
+
+# achievement motivation
+
+```{r}
+mod7 <- aov(hope_of_success ~ math_sc + group, data = exp1_data)
+summary(mod7)
+rstatix::eta_squared(mod7)
+
+exp1_group_hos_summary <- exp1_data %>%
+  group_by(group) %>%
+  summarise(mean = mean(hope_of_success), sd = sd(hope_of_success))
+
+```
+
+#Baseline
+
+```{r}
+summary(lm(cbind(PreMood, PreTired, SBPBase, DBPBase, MAPBase, HRbase, PEPBase) ~ group, data = exp1_data))
+effectsize::eta_squared(lm(cbind(PreMood, PreTired, SBPBase, DBPBase, MAPBase, HRbase, PEPBase) ~ group, data = exp1_data))
+```
+
+# Reward analysis
+
+## Reward by group overall:
+```{r}
+mod8 <- aov(reward ~ group, data = exp1_data)
+rstatix::eta_squared(mod8)
+
+reward_group_exp1 <- exp1_data %>%
+  group_by(group) %>%
+  summarise(mean= mean(reward), sd = sd(reward))
+```
+
+## Reward by N-back block (manipulation check)
+
+```{r}
+mod9 <- lmer(reward~ group*pep + (pep|subject), data = nback_blocks)
+summary(mod9)
+anova(mod9)
+```
+
+## Nback performance predicting difficulty choice
+```{r}
+mod10 <- lm(difficulty ~ group*nback_performance, data = exp1_data)
+Anova(mod10, type = "III")
+```
+
+# Post task questionnaires:
+```{r}
+# MET Level 1 enjoyment:
+summary(aov(level1_response ~ group, exp1_data))
+rstatix::eta_squared(aov(level1_response ~ group, exp1_data))
+
+# MET Level 2 enjoyment:
+summary(aov(level2_response ~ group, exp1_data))
+rstatix::eta_squared(aov(level2_response ~ group, exp1_data))
+
+# Willpower
+summary(aov(willpower ~ group, exp1_data))
+rstatix::eta_squared(aov(willpower ~ group, exp1_data))
+
+# Remaining questionnaires:
+summary(lm(cbind(level3_response, level4_response, level5_response, enjoy_response, difficulty_response, PostTired, PostMood) ~ group, data = exp1_data))
+effectsize::eta_squared(lm(cbind(level3_response, level4_response, level5_response, enjoy_response, difficulty_response, PostTired, PostMood) ~ group, data = exp1_data))
+```
+
+
+
+
+
