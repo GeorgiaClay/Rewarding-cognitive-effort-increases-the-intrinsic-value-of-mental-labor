@@ -1,0 +1,221 @@
+---
+title: "Analysis_Exp2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(rstatix)
+library(esc)
+library(meta)
+```
+
+read in data
+
+```{r}
+data2a <- readRDS("data2a.RDS")
+data2b <- readRDS("data2b.RDS")
+data2c <- readRDS("data2c.RDS")
+data2d <- readRDS("data2d.RDS")
+data2e <- readRDS("data2e.RDS")
+
+met2a <- readRDS("met2a.RDS")
+met2b <- readRDS("met2b.RDS")
+met2c <- readRDS("met2c.RDS")
+met2d <- readRDS("met2d.RDS")
+met2e <- readRDS("met2e.RDS")
+
+nback2a <- readRDS("nback2a.RDS")
+nback2b <- readRDS("nback2b.RDS")
+nback2c <- readRDS("nback2c.RDS")
+nback2d <- readRDS("nback2d.RDS")
+nback2e <- readRDS("nback2e.RDS")
+
+```
+
+
+# Difficulty choice by group
+
+```{r}
+
+datasets <- list(data2a, data2b, data2c, data2d, data2e)
+
+lapply(datasets, function(x){
+  summary(aov(difficulty ~ mathsc + group, data = x))})
+```
+
+# Difficulty choice meta analysis
+
+```{r}
+
+# Combine data into one dataframe:
+all_exp2_data <- rbind(data2a[,c("subject", "group", "difficulty", "mathsc", "wave", "difficulty_resid", "METraw", "METraw_resid")], 
+           data2b[,c("subject", "group", "difficulty", "mathsc", "wave", "difficulty_resid", "METraw", "METraw_resid")],
+           data2c[,c("subject", "group", "difficulty", "mathsc", "wave", "difficulty_resid", "METraw", "METraw_resid")],
+           data2d[,c("subject", "group", "difficulty", "mathsc", "wave", "difficulty_resid", "METraw", "METraw_resid")],
+           data2e[,c("subject", "group", "difficulty", "mathsc", "wave", "difficulty_resid", "METraw", "METraw_resid")])
+
+# create df to store mean and sds:
+meta_df <- setNames(data.frame(matrix(ncol = 7, nrow = 5)), c("g1m", "g1sd", "g1n", "g2m", "g2sd", "g2n", "study")) %>%
+  mutate(study = c(1:5))
+
+# fill df with mean and sds:
+for (i in c(1:5)){
+  meta_df$g1n[i] = length(all_exp2_data$subject[all_exp2_data$group == 1 & all_exp2_data$wave == i]);
+  meta_df$g2n[i] = length(all_exp2_data$subject[all_exp2_data$group == 2 & all_exp2_data$wave == i]);
+  meta_df$g1m[i] = mean(all_exp2_data$difficulty_resid[all_exp2_data$group == 1 & all_exp2_data$wave == i]);
+  meta_df$g2m[i] = mean(all_exp2_data$difficulty_resid[all_exp2_data$group == 2 & all_exp2_data$wave == i]);
+  meta_df$g1sd[i] = sd(all_exp2_data$difficulty_resid[all_exp2_data$group == 1 & all_exp2_data$wave == i]);
+  meta_df$g2sd[i] = sd(all_exp2_data$difficulty_resid[all_exp2_data$group == 2 & all_exp2_data$wave == i]);
+}
+
+# calculate effect sizes
+meta_ef <- esc_mean_sd(grp1m = meta_df$g1m,
+                       grp1sd = meta_df$g1sd,
+                       grp1n = meta_df$g1n,
+                       grp2m = meta_df$g2m,
+                       grp2sd = meta_df$g2sd,
+                       grp2n = meta_df$g2n,
+                       study = meta_df$study) %>% 
+                     as.data.frame()
+
+#meta analysis
+
+
+meta <- metagen(meta_ef$es, 
+             meta_ef$se, 
+             data = meta_ef,
+             studlab = paste(c("2a", "2b", "2c","2d", "2e")), 
+             comb.fixed = TRUE, 
+             comb.random = FALSE,
+             prediction = TRUE, sm= "MD")
+meta
+```
+
+# Difficulty choice across time
+```{r}
+modela <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
+             + (trialpercent|subject), data = met2a, REML = FALSE)
+
+modelb <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
+             + (trialpercent|subject), data = met2b, REML = FALSE)
+
+modelc <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
+             + (trialpercent|subject), data = met2c, REML = FALSE)
+
+modeld <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
+             + (trialpercent|subject), data = met2d, REML = FALSE)
+
+modele <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
+             + (trialpercent|subject), data = met2e, REML = FALSE)
+```
+
+
+# MET difficulty time quadratic interaction meta analysis
+```{r}
+# Create df for effect sizes
+MET_time_meta_df <- setNames(data.frame(matrix(ncol = 3, nrow = 5)), c("ef", "se", "study")) %>%
+  mutate(study = c(1:5))
+
+# Extract effect sizes from models:
+
+efs <- vector()
+models <- list(modela, modelb, modelc, modeld, modele)
+
+efs <- lapply(models, function(x) {
+  summary(x)$coefficients[7] # extract coefficients of quadratic group:trial interaction term
+})
+
+ses <- lapply(models, function(x) {
+  summary(x)$coefficients[14] #extract SEs of these coefficients
+})
+
+for (i in c(1:5)){
+  MET_time_meta_df[i,1] <- efs[[i]]
+  MET_time_meta_df[i,2] <- ses[[i]]
+}
+
+MET_time_meta <- metagen(MET_time_meta_df$ef, 
+             MET_time_meta_df$se, 
+             data = MET_time_meta_df,
+             studlab = paste(c("2a", "2b", "2c","2d", "2e")), 
+             comb.fixed = TRUE, 
+             comb.random = FALSE,
+             prediction = TRUE, sm= "MD")
+MET_time_meta
+
+```
+
+# MET performance
+
+## logistic regression:
+
+```{r}
+m1 <- glmer(correct ~ group + difficulty + (difficulty|subject), 
+            family = binomial("logit"), data = met2a)
+summary(m1)
+
+m2 <- glmer(correct ~ group + difficulty + (difficulty|subject), family = binomial("logit"), data = met2b)
+  summary(m2)
+
+m3 <- glmer(correct ~ group + difficulty + (difficulty|subject), family = binomial("logit"), data = met2c)
+summary(m3)
+
+m4 <- glmer(correct ~ group + difficulty + (difficulty|subject), family = binomial("logit"), data = met2d)
+summary(m4)
+
+m5 <- glmer(correct ~ group+ difficulty + (difficulty|subject), family = binomial("logit"), data = met2e)
+summary(m5)
+```
+
+## meta analysis of group term:
+
+```{r}
+# Create df for effect sizes:
+MET_performance_meta_df <- setNames(data.frame(matrix(ncol = 3, nrow = 5)), c("ef", "se", "study")) %>%
+  mutate(study = c(1:5))
+
+# Extract effect sizes from models:
+efs <- vector()
+models <- list(m1, m2, m3, m4, m5)
+
+efs <- lapply(models, function(x) {
+  summary(x)$coefficients[2] # extract coefficient of group
+})
+
+ses <- lapply(models, function(x) {
+  summary(x)$coefficients[5] # extract SE of coefficient of group
+})
+
+for (i in c(1:5)){
+  MET_performance_meta_df[i,1] <- efs[[i]]
+  MET_performance_meta_df[i,2] <- ses[[i]]
+}
+
+MET_performance_meta <- metagen(MET_performance_meta_df$ef, 
+             MET_performance_meta_df$se, 
+             data = MET_performance_meta_df,
+             studlab = paste(c("2a", "2b", "2c","2d", "2e")), 
+             comb.fixed = TRUE, 
+             comb.random = FALSE,
+             prediction = TRUE, sm= "MD")
+MET_performance_meta
+```
+# achievement motivation:
+
+```{r}
+#Study 2d
+summary(aov(hope_of_success ~ mathsc + group, data = data2d))
+rstatix::eta_squared(aov(hope_of_success ~ mathsc + group, data = data2d))
+
+# Study 2e
+summary(aov(hope_of_success ~ mathsc + group, data = data2e))
+rstatix::eta_squared(aov(hope_of_success ~ mathsc + group, data = data2e))
+
+```
+
+
+
+
