@@ -10,28 +10,38 @@ library(tidyverse)
 library(rstatix)
 library(esc)
 library(meta)
+library(lmerTest)
 ```
 
 read in data
 
 ```{r}
-data2a <- readRDS("data2a.RDS")
-data2b <- readRDS("data2b.RDS")
-data2c <- readRDS("data2c.RDS")
-data2d <- readRDS("data2d.RDS")
-data2e <- readRDS("data2e.RDS")
+exp2_data <- read.csv("exp2_data.csv")
 
-met2a <- readRDS("met2a.RDS")
-met2b <- readRDS("met2b.RDS")
-met2c <- readRDS("met2c.RDS")
-met2d <- readRDS("met2d.RDS")
-met2e <- readRDS("met2e.RDS")
 
-nback2a <- readRDS("nback2a.RDS")
-nback2b <- readRDS("nback2b.RDS")
-nback2c <- readRDS("nback2c.RDS")
-nback2d <- readRDS("nback2d.RDS")
-nback2e <- readRDS("nback2e.RDS")
+data2a <- exp2_data %>%
+  filter(wave == 1)
+data2b <- exp2_data %>%
+  filter(wave == 2)
+data2c <- exp2_data %>%
+  filter(wave == 3)
+data2d <- exp2_data %>%
+  filter(wave == 4)
+data2e <- exp2_data %>%
+  filter(wave == 5)
+
+
+met2a <- read.csv("met2a.csv")
+met2b <- read.csv("met2b.csv")
+met2c <- read.csv("met2c.csv")
+met2d <- read.csv("met2d.csv")
+met2e <- read.csv("met2e.csv")
+
+nback2a <- read.csv("nback2a.csv")
+nback2b <- read.csv("nback2b.csv")
+nback2c <- read.csv("nback2c.csv")
+nback2d <- read.csv("nback2d.csv")
+nback2e <- read.csv("nback2e.csv")
 
 ```
 
@@ -44,31 +54,26 @@ datasets <- list(data2a, data2b, data2c, data2d, data2e)
 
 lapply(datasets, function(x){
   summary(aov(difficulty ~ mathsc + group, data = x))})
+
 ```
 
 # Difficulty choice meta analysis
 
 ```{r}
 
-# Combine data into one dataframe:
-all_exp2_data <- rbind(data2a[,c("subject", "group", "difficulty", "mathsc", "wave", "difficulty_resid", "METraw", "METraw_resid")], 
-           data2b[,c("subject", "group", "difficulty", "mathsc", "wave", "difficulty_resid", "METraw", "METraw_resid")],
-           data2c[,c("subject", "group", "difficulty", "mathsc", "wave", "difficulty_resid", "METraw", "METraw_resid")],
-           data2d[,c("subject", "group", "difficulty", "mathsc", "wave", "difficulty_resid", "METraw", "METraw_resid")],
-           data2e[,c("subject", "group", "difficulty", "mathsc", "wave", "difficulty_resid", "METraw", "METraw_resid")])
-
 # create df to store mean and sds:
 meta_df <- setNames(data.frame(matrix(ncol = 7, nrow = 5)), c("g1m", "g1sd", "g1n", "g2m", "g2sd", "g2n", "study")) %>%
   mutate(study = c(1:5))
 
 # fill df with mean and sds:
-for (i in c(1:5)){
-  meta_df$g1n[i] = length(all_exp2_data$subject[all_exp2_data$group == 1 & all_exp2_data$wave == i]);
-  meta_df$g2n[i] = length(all_exp2_data$subject[all_exp2_data$group == 2 & all_exp2_data$wave == i]);
-  meta_df$g1m[i] = mean(all_exp2_data$difficulty_resid[all_exp2_data$group == 1 & all_exp2_data$wave == i]);
-  meta_df$g2m[i] = mean(all_exp2_data$difficulty_resid[all_exp2_data$group == 2 & all_exp2_data$wave == i]);
-  meta_df$g1sd[i] = sd(all_exp2_data$difficulty_resid[all_exp2_data$group == 1 & all_exp2_data$wave == i]);
-  meta_df$g2sd[i] = sd(all_exp2_data$difficulty_resid[all_exp2_data$group == 2 & all_exp2_data$wave == i]);
+for (i in c(1:5)) {
+  
+  meta_df$g1n[i] = length(exp2_data$subject[exp2_data$group == 1 & exp2_data$wave == i]);
+  meta_df$g2n[i] = length(exp2_data$subject[exp2_data$group == 2 & exp2_data$wave == i]);
+  meta_df$g1m[i] = mean(exp2_data$difficulty_resid[exp2_data$group == 1 & exp2_data$wave == i]);
+  meta_df$g2m[i] = mean(exp2_data$difficulty_resid[exp2_data$group == 2 & exp2_data$wave == i]);
+  meta_df$g1sd[i] = sd(exp2_data$difficulty_resid[exp2_data$group == 1 & exp2_data$wave == i]);
+  meta_df$g2sd[i] = sd(exp2_data$difficulty_resid[exp2_data$group == 2 & exp2_data$wave == i]);
 }
 
 # calculate effect sizes
