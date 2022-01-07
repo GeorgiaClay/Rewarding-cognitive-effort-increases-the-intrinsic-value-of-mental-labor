@@ -1,6 +1,8 @@
 ---
-title: "Analysis_Exp2"
+title: "Exp2_analysis"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -10,41 +12,69 @@ library(tidyverse)
 library(rstatix)
 library(esc)
 library(meta)
-library(lmerTest)
 ```
 
 read in data
 
 ```{r}
-exp2_data <- read.csv("exp2_data.csv")
+data2a <- readRDS("data2a.RDS")
+data2b <- readRDS("data2b.RDS")
+data2c <- readRDS("data2c.RDS")
+data2d <- readRDS("data2d.RDS")
+data2e <- readRDS("data2e.RDS")
 
+met2a <- readRDS("met2a.RDS")
+met2b <- readRDS("met2b.RDS")
+met2c <- readRDS("met2c.RDS")
+met2d <- readRDS("met2d.RDS")
+met2e <- readRDS("met2e.RDS")
 
-data2a <- exp2_data %>%
-  filter(wave == 1)
-data2b <- exp2_data %>%
-  filter(wave == 2)
-data2c <- exp2_data %>%
-  filter(wave == 3)
-data2d <- exp2_data %>%
-  filter(wave == 4)
-data2e <- exp2_data %>%
-  filter(wave == 5)
-
-
-met2a <- read.csv("met2a.csv")
-met2b <- read.csv("met2b.csv")
-met2c <- read.csv("met2c.csv")
-met2d <- read.csv("met2d.csv")
-met2e <- read.csv("met2e.csv")
-
-nback2a <- read.csv("nback2a.csv")
-nback2b <- read.csv("nback2b.csv")
-nback2c <- read.csv("nback2c.csv")
-nback2d <- read.csv("nback2d.csv")
-nback2e <- read.csv("nback2e.csv")
+nback2a <- readRDS("nback2a.RDS")
+nback2b <- readRDS("nback2b.RDS")
+nback2c <- readRDS("nback2c.RDS")
+nback2d <- readRDS("nback2d.RDS")
+nback2e <- readRDS("nback2e.RDS")
 
 ```
 
+# Demographics
+
+```{r}
+# 2a
+
+table(data2a$gender_response)
+mean(data2a$age_response, na.rm = T)
+sd(data2a$age_response, na.rm = T)
+table(data2a$group)
+
+# 2b
+
+table(data2b$gender)
+mean(data2b$age, na.rm = T)
+sd(data2b$age, na.rm = T)
+table(data2b$group)
+
+# 2c
+
+table(data2c$gender)
+mean(data2c$age, na.rm = T)
+sd(data2c$age, na.rm = T)
+table(data2c$group)
+
+#2d
+
+table(data2d$gender)
+mean(data2d$age, na.rm = T)
+sd(data2b$age, na.rm = T)
+table(data2d$group)
+
+#2e
+
+table(data2e$gender_response)
+mean(data2e$age, na.rm = T)
+sd(data2e$age, na.rm = T)
+table(data2e$group)
+```
 
 # Difficulty choice by group
 
@@ -52,28 +82,858 @@ nback2e <- read.csv("nback2e.csv")
 
 datasets <- list(data2a, data2b, data2c, data2d, data2e)
 
-lapply(datasets, function(x){
-  summary(aov(difficulty ~ mathsc + group, data = x))})
+lapply(datasets, function(x){summary(aov(difficulty ~ mathsc + group, data = x))})
+
+# 2a
+aov1a <- aov(difficulty ~ mathsc + group, data = data2a)
+summary(aov1a)
+rstatix::partial_eta_squared(aov1a)
+
+diff_summary2a <- data2a %>%
+  group_by(group) %>%
+  summarise(mean = mean(difficulty), sd = sd(difficulty))
+
+# 2b
+aov1b <- aov(difficulty ~ mathsc + group, data = data2b)
+summary(aov1b)
+partial_eta_squared(aov1b)
+effectsize::eta_squared(aov1b)
+
+diff_summary2b <- data2b %>%
+  group_by(group) %>%
+  summarise(mean = mean(difficulty), sd = sd(difficulty))
+
+#2c
+aov1c <- aov(difficulty ~ mathsc + group, data = data2c)
+summary(aov1c)
+partial_eta_squared(aov1c)
+effectsize::eta_squared(aov1c)
+
+diff_summary2c <- data2c %>%
+  group_by(group) %>%
+  summarise(mean = mean(difficulty), sd = sd(difficulty))
+
+#2d
+aov1d <- aov(difficulty ~ mathsc + group, data = data2d)
+summary(aov1d)
+partial_eta_squared(aov1d)
+effectsize::eta_squared(aov1d)
+
+diff_summary2d <- data2d %>%
+  group_by(group) %>%
+  summarise(mean = mean(difficulty), sd = sd(difficulty))
+
+#2e
+aov1e <- aov(difficulty ~ mathsc + group, data = data2e)
+summary(aov1e)
+partial_eta_squared(aov1e)
+effectsize::eta_squared(aov1e)
+library(apaTables)
+get.ci.partial.eta.squared(10.25, 1, 497, conf.level = 0.9)
+
+diff_summary2e <- data2e %>%
+  group_by(group) %>%
+  summarise(mean = mean(difficulty), sd = sd(difficulty)) 
+```
+
+# Reward by group  
+
+```{r}
+#2a
+summary(aov(reward ~ group, data = data2a))
+rstatix::eta_squared(aov(reward ~ group, data = data2a))
+
+summary(aov(reward ~ group, data = data2b))
+rstatix::eta_squared(aov(reward ~ group, data = data2b))
+
+summary(aov(reward ~ group, data = data2c))
+rstatix::eta_squared(aov(reward ~ group, data = data2c))
+
+summary(aov(reward ~ group, data = data2d))
+rstatix::eta_squared(aov(reward ~ group, data = data2d))
+
+summary(aov(reward ~ group, data = data2e))
+rstatix::eta_squared(aov(reward ~ group, data = data2e))
+```
+
+# Nback analysis
+
+## Reward
+```{r}
+# To see how much reward was gotten in each block:
+
+nback_rewards2a <- nback2a %>% filter(((values.N == 3 & trialnum == 18) |
+                                        (values.N == 2 & trialnum == 17) |
+                                        (values.N == 1 & trialnum == 16) |
+                                        (trialcode== "EndExp")) &
+                                        !is.na(list.rewardlist.nextvalue))
+
+nrow(nback_rewards2a[nback_rewards2a$list.rewardlist.nextvalue == 0,])/
+  nrow(nback_rewards2a) #0.039
+
+
+nback_rewards2b <- nback2b %>% filter(((values.N == 3 & trialnum == 18) |
+                                        (values.N == 2 & trialnum == 17) |
+                                        (values.N == 1 & trialnum == 16) |
+                                        (trialcode== "EndExp")) &
+                                        !is.na(list.rewardlist.nextvalue))
+
+nrow(nback_rewards2b[nback_rewards2b$list.rewardlist.nextvalue == 0,])/
+  nrow(nback_rewards2b) #0.046
+
+nback_rewards2c <- nback2c %>% filter(((values.N == 3 & trialnum == 18) |
+                                        (values.N == 2 & trialnum == 17) |
+                                        (values.N == 1 & trialnum == 16) |
+                                        (trialcode== "EndExp")) &
+                                        !is.na(list.rewardlist.nextvalue))
+
+nrow(nback_rewards2c[nback_rewards2c$list.rewardlist.nextvalue == 0,])/
+  nrow(nback_rewards2c) #0.055
+
+nback_rewards2d <- nback2d %>% filter(((values.N == 3 & trialnum == 18) |
+                                        (values.N == 2 & trialnum == 17) |
+                                        (values.N == 1 & trialnum == 16) |
+                                        (trialcode== "EndExp")) &
+                                        !is.na(list.rewardlist.nextvalue))
+
+nrow(nback_rewards2d[nback_rewards2d$list.rewardlist.nextvalue == 0,])/
+  nrow(nback_rewards2d) #0.069
+
+nback_rewards2e <- nback2e %>% filter(((N == 3 & trialnum == 18) |
+                                        (N == 2 & trialnum == 17) |
+                                        (N == 1 & trialnum == 16) |
+                                        (trialcode== "EndExp")) &
+                                        !is.na(list.rewardlist.nextvalue))
+
+nrow(nback_rewards2e[nback_rewards2e$list.rewardlist.nextvalue == 0,])/
+  nrow(nback_rewards2e) #0.025
+
 
 ```
 
-# Difficulty choice meta analysis
+## Nback performance
+
+### calculate performance
+```{r}
+
+list <- list(nback2a, nback2b, nback2c, nback2d, nback2e)
+
+list <- setNames(list, c("nback2a", "nback2b", "nback2c", "nback2d", "nback2e")) #give names to list
+nback_perf_blocks2 <- 
+  setNames(lapply(list, function(x){
+  x %>% 
+  filter(trialcode %in% c("target", "nontarget")) %>%
+  rename(blocknum = values.TotalBlocks) %>%
+  group_by(subject) %>%
+  summarise(nbackperformance = mean(correct))
+}),
+  gsub("nback", "nback_perf_blocks", names(list)))
+
+
+```
+
+### performance by group
+
+```{r}
+list <- list(data2a, data2b, data2c, data2d, data2e)
+
+lm <- lapply(list, function(x){
+  summary(lm(nbackperformance ~ group, data = x))})
+ #rstatix::eta_squared(lm(nbackperformance ~ group, data = x))})
+lm
+
+summary(lm(nbackperformance~ group, data = data2e))
+```
+
+
+# MET choice across time 
+
+## preparation
+
+
+```{r}
+### 2a
+
+exp2a_met_trials <- met2a %>%
+  filter(trialcode == "response_response") %>%
+  rename(difficulty = values.currentLevel,
+         trial = values.countTotalTrials,
+         correct = values.correct, 
+         rt = values.rt) %>%
+  mutate(section = as.factor(ifelse(trial <= 17, "1",
+                          ifelse(trial <= 34, "2",
+                          "3"))), 
+         group = as.factor(group),
+         subject = as.factor(subject),
+         study = "2a",
+         trialpercent = trial/50) %>%
+  select(subject, group, trial, difficulty, section, correct, study, trialpercent, rt) %>%
+  left_join(data2a[,c('subject', 'mathsc')])
+  
+exp2a_met_sections <- exp2a_met_trials %>%
+  group_by(subject, section) %>%
+  summarise(difficulty = mean(difficulty)) %>%
+  left_join(data2a[,c("subject", "group", "mathsc")])
+
+write.csv(exp2a_met_trials, "exp2a_met_trials.csv")
+
+
+### 2b
+
+exp2b_met_trials <- met2b %>%
+  filter(trialcode == "response_response") %>%
+  rename(difficulty = values.currentLevel,
+         trial = values.countTotalTrials,
+         correct = values.correct,
+         rt = values.rt) %>%
+  mutate(section = as.factor(ifelse(trial <= 17, "1",
+                          ifelse(trial <= 34, "2",
+                          "3"))), 
+         group = as.factor(group),
+         subject = as.factor(subject),
+         study = "2b",
+         trialpercent = trial/50)  %>%
+  select(subject, group, trial, difficulty, section, correct, study, trialpercent, rt)%>%
+  left_join(data2b[,c('subject', 'mathsc')]) 
+
+exp2b_met_sections <- exp2b_met_trials %>%
+  group_by(subject, section) %>%
+  summarise(difficulty = mean(difficulty)) %>%
+  left_join(data2b[,c('subject', 'mathsc', "group")]) 
+
+write.csv(exp2b_met_trials, "exp2b_met_trials.csv")
+
+
+### 2c
+
+  exp2c_met_trials <- met2c %>%
+  filter(trialcode == "response_response") %>%
+  rename(difficulty = values.currentLevel,
+         trial = values.countTotalTrials,
+         correct = values.correct,
+         rt = values.rt) %>%
+  mutate(section = as.factor(ifelse(trial <= 17, "1",
+                          ifelse(trial <= 34, "2",
+                          "3"))), 
+         group = as.factor(group),
+         subject = as.factor(subject),
+         study = "2c",
+         trialpercent = trial/50)  %>%
+  select(subject, group, trial, difficulty, section, correct, study, trialpercent, rt) %>%
+  left_join(data2c[,c('subject', 'mathsc')])
+
+exp2c_met_sections <- exp2c_met_trials %>%
+  group_by(subject, section) %>%
+  summarise(difficulty = mean(difficulty)) %>%
+  left_join(data2c[,c("subject", "group", "mathsc")])
+
+write.csv(exp2c_met_trials, "exp2c_met_trials.csv")
+
+
+### 2d
+
+exp2d_met_trials <- met2d %>%
+  filter(trialcode == "response_response") %>%
+  rename(difficulty = values.currentLevel,
+         trial = values.countTotalTrials,
+         correct = values.correct, 
+         rt = values.rt) %>%
+  mutate(section = as.factor(ifelse(trial <= 17, "1",
+                          ifelse(trial <= 34, "2",
+                          "3"))), 
+         group = as.factor(group),
+         subject = as.factor(subject),
+         study = "2d",
+         trialpercent = trial/50)  %>%
+  select(subject, group, trial, difficulty, section, correct, study, trialpercent, rt)%>%
+  left_join(data2d[,c('subject', 'mathsc')])
+
+exp2d_met_sections <- exp2d_met_trials %>%
+  group_by(subject, section) %>%
+  summarise(difficulty = mean(difficulty)) %>%
+  left_join(data2d[,c("subject", "group", "mathsc")])
+write.csv(exp2d_met_trials, "exp2d_met_trials.csv")
+
+
+### 2e
+exp2e_met_trials <- met2e %>%
+  filter(trialcode == "response_response") %>%
+  rename(difficulty = currentLevel,
+         trial = countTotalTrials) %>%
+  mutate(section = as.factor(ifelse(trial <= 17, "1",
+                          ifelse(trial <= 34, "2",
+                          "3"))), 
+         group = as.factor(group),
+         subject = as.factor(subject),
+         study = "2e",
+         trialpercent = trial/50)  %>%
+  select(subject, group, trial, difficulty, section, correct, study, trialpercent, rt) %>%
+  left_join(data2e[,c('subject', 'mathsc')])
+
+exp2e_met_sections <- exp2_met_trials %>%
+  group_by(subject, section) %>%
+  summarise(difficulty = mean(difficulty)) %>%
+  left_join(data2e[,c("subject", "group", "mathsc")])
+
+write.csv(exp2e_met_trials, "exp2e_met_trials.csv")
+
+```
+## ancovas
+
+```{r}
+aov2a <- aov(difficulty ~ mathsc + section*group +Error(subject/section), exp2a_met_sections)
+anova_summary(aov2a)
+
+difficulty_section2a <- exp2a_met_sections %>%
+  group_by(section, group) %>%
+  summarise(mean = mean(difficulty), sd = sd(difficulty), se = sd(difficulty)/sqrt(n()))
+
+
+aov2b <- aov(difficulty ~ mathsc + section*group +Error(subject/section), exp2b_met_sections)
+anova_summary(aov2b)
+
+difficulty_section2b <- exp2b_met_sections %>%
+  group_by(section, group) %>%
+  summarise(mean = mean(difficulty), sd = sd(difficulty), se = sd(difficulty)/sqrt(n()))
+
+aov2c <- aov(difficulty ~ mathsc + section*group +Error(subject/section), exp2c_met_sections)
+anova_summary(aov2c)
+
+difficulty_section2c <- exp2c_met_sections %>%
+  group_by(section, group) %>%
+  summarise(mean = mean(difficulty), sd = sd(difficulty), se = sd(difficulty)/sqrt(n()))
+
+
+aov2d <- aov(difficulty ~ mathsc + section*group +Error(subject/section), exp2d_met_sections)
+anova_summary(aov2d)
+
+difficulty_section2d <- exp2d_met_sections %>%
+  group_by(section, group) %>%
+  summarise(mean = mean(difficulty), sd = sd(difficulty), se = sd(difficulty)/sqrt(n()))
+  
+ggplot(difficulty_section2d, aes(x = section, y = mean, color = as.factor(group))) + geom_point() +
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se, width = 0.2))
+
+
+aov2e <- aov(difficulty ~ mathsc + section*group +Error(subject/section), exp2e_met_sections)
+anova_summary(aov2e)
+
+difficulty_section2e <- exp2e_met_sections %>%
+  group_by(section, group) %>%
+  summarise(mean = mean(difficulty), sd = sd(difficulty), se = sd(difficulty)/sqrt(n()))
+```
+
+## hlm
+
+```{r}
+modela <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
+             + (trialpercent|subject), data = exp2a_met_trials, REML = FALSE)
+
+summary(modela)
+
+plot_model(modela, type = "pred", terms = c("trial[all]", "group"))
+
+modelb <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
+             + (trialpercent|subject), data = exp2b_met_trials, REML = FALSE)
+
+modelc <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
+             + (trialpercent|subject), data = exp2c_met_trials, REML = FALSE)
+
+modeld <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
+             + (trialpercent|subject), data = exp2d_met_trials, REML = FALSE)
+
+modele <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
+             + (trialpercent|subject), data = exp2e_met_trials, REML = FALSE)
+
+plot_model(modele, type = "pred", terms = c("trial[all]", "group"))
+
+
+
+
+summary(modela)
+
+exp2a_met_trials$predict <- predict(modela)
+exp2a_met_trials$fitted <- fitted(modela)
+exp2a_met_trials$trial2 <- exp2a_met_trials$trial^2
+
+```
+
+## table
+```{r}
+list <- list(modela, modelb, modelc, modeld, modele)
+
+confint <- lapply(list, function(x){
+  ci <- confint(x, method = "Wald") %>% 
+  as.data.frame() %>%
+  slice(5:11) %>%
+  round(digits = 2) %>% #use to export to word
+  unite("CI", 1:2, sep= ",") 
+  ci[,c(1)] <- paste("[", ci[,c(1)], "]", sep = "")
+
+  #to export for word:
+  table <- data.frame(coef(summary(x))) %>%
+    select(-c(3)) %>%
+    round(digit = 2) %>%
+    mutate(CI = ci$CI) %>%
+    remove_rownames()
+})
+
+confint2 <- do.call(rbind, confint)
+
+write.table(confint2, sep = "!", row.names = F)
+```
+
+
+# MET difficulty time quadratic interaction meta analysis
+```{r}
+MET_meta_df <- setNames(data.frame(matrix(ncol = 3, nrow = 5)), c("ef", "se", "study")) %>%
+  mutate(study = c(1:5))
+
+efs <- vector()
+models <- list(modela, modelb, modelc, modeld, modele)
+efs <- lapply(models, function(x) {
+  summary(x)$coefficients[7]
+})
+
+ses <- lapply(models, function(x) {
+  summary(x)$coefficients[14]
+})
+
+for (i in c(1:5)){
+  MET_meta_df[i,1] <- efs[[i]]
+  MET_meta_df[i,2] <- ses[[i]]
+}
+
+MET_meta <- metagen(MET_meta_df$ef, 
+             MET_meta_df$se, 
+             data = MET_meta_df,
+             studlab = paste(c("2a", "2b", "2c","2d", "2e")), 
+             comb.fixed = TRUE, 
+             comb.random = FALSE,
+             prediction = TRUE, sm= "MD")
+MET_meta
+
+forest.meta(MET_meta,
+            print.tau2 = FALSE,
+            digits = 2)
+```
+
+```{r}
+x <- seq(1,5,length.out = 100)
+
+y <- poly(x,2)
+
+plot(x, x^2)
+cor(x, x^2)
+```
+
+# MET performance
+
+## raw score
+
+```{r}
+m1 <- glmer(correct ~ group + difficulty + (difficulty|subject), 
+            family = binomial("logit"), data = exp2a_met_trials,
+            control=glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+summary(m1)
+
+m2 <- glmer(correct ~ group + difficulty + (difficulty|subject), family = binomial("logit"), data = exp2b_met_trials)
+  summary(m2)
+
+m3 <- glmer(correct ~ group + difficulty + (difficulty|subject), family = binomial("logit"), data = exp2c_met_trials)
+summary(m3)
+
+m4 <- glmer(correct ~ group + difficulty + (difficulty|subject), family = binomial("logit"), data = exp2d_met_trials)
+summary(m4)
+
+m5 <- glmer(correct ~ group+ difficulty + (difficulty|subject), family = binomial("logit"), data = exp2e_met_trials)
+summary(m5)
+```
+
+```{r}
+glm2a <- list()
+glm2b <- list()
+glm2c <- list()
+glm2d <- list()
+glm2e <- list()
+#2a
+for (i in c(1:5)){
+glm2a[[i]] <- summary(glmer(correct ~ group  + (1|subject), family = binomial("logit"), data = exp2a_met_trials[exp2a_met_trials$difficulty == i,]))
+}
+
+#2b
+for (i in c(1:5)){
+glm2b[[i]] <- summary(glmer(correct ~ group  + (1|subject), family = binomial("logit"), data = exp2b_met_trials[exp2b_met_trials$difficulty == i,]))
+}
+
+#2c
+for (i in c(1:5)){
+glm2c[[i]] <- summary(glmer(correct ~ group  + (1|subject), family = binomial("logit"), data = exp2c_met_trials[exp2c_met_trials$difficulty == i,]))
+}
+
+#2d
+for (i in c(1:5)){
+glm2d[[i]] <- summary(glmer(correct ~ group  + (1|subject), family = binomial("logit"), data = exp2d_met_trials[exp2d_met_trials$difficulty == i,]))
+}
+
+#2e
+for (i in c(1:5)){
+glm2e[[i]] <- summary(glmer(correct ~ group  + (1|subject), family = binomial("logit"), data = exp2e_met_trials[exp2e_met_trials$difficulty == i,]))
+}
+```
+
+```{r}
+#table
+all_met_trials <- rbind(exp2a_met_trials, exp2b_met_trials, 
+                        exp2c_met_trials, exp2d_met_trials,
+                        exp2e_met_trials)
+
+metscore_table <- all_met_trials %>%
+  group_by(study, subject, difficulty, group) %>%
+  summarise(mean = mean(correct), sd = sd(correct)) 
+
+metscore_summary2 <- all_exp2_data %>%
+  group_by(group) %>%
+  summarise(mean = mean(METraw), sd = sd(METraw))
+
+write.csv(metscore_table, "metscore_table.csv")
+  
+#ancovas comparing raw MET score between groups
+
+aov4a <- aov(METraw ~ mathsc + group, data2a)
+summary(aov4a)
+rstatix::eta_squared(aov4a)
+metraw_summary2a <- data2a %>%
+  group_by(group) %>%
+  summarise(mean = mean(METraw), sd = sd(METraw))
+
+aov4b <- aov(METraw ~ mathsc + group, data2b)
+summary(aov4b)
+rstatix::eta_squared(aov4b)
+metraw_summary2b <- data2b %>%
+  group_by(group) %>%
+  summarise(mean = mean(METraw), sd = sd(METraw))
+
+aov4c <- aov(METraw ~ mathsc + group, data2c)
+summary(aov4c)
+rstatix::eta_squared(aov4c)
+metraw_summary2c <- data2c %>%
+  group_by(group) %>%
+  summarise(mean = mean(METraw), sd = sd(METraw))
+
+aov4d <- aov(METraw ~ mathsc + group, data2d)
+summary(aov4d)
+rstatix::eta_squared(aov4d)
+metraw_summary2d <- data2d %>%
+  group_by(group) %>%
+  summarise(mean = mean(METraw), sd = sd(METraw))
+
+aov4e <- aov(METraw ~ mathsc + group, data2e)
+summary(aov4e)
+rstatix::eta_squared(aov4e)
+metraw_summary2e <- data2e %>%
+  group_by(group) %>%
+  summarise(mean = mean(METraw), sd = sd(METraw))
+
+x <- list(aov4a, aov4b, aov4c, aov4d, aov4e)
+lapply(x, partial_eta_squared)
+
+get.ci.partial.eta.squared(5.15, 1, 497,  conf.level = 0.9)
+```
+
+## composite score
 
 ```{r}
 
-# create df to store mean and sds:
+aov4a <- aov(METscore ~ mathsc + group, data2a)
+summary(aov4a)
+rstatix::eta_squared(aov4a)
+metscore_summary2a <- data2a %>%
+  group_by(group) %>%
+  summarise(mean = mean(METscore), sd = sd(METscore))
+
+aov4b <- aov(METscore ~ mathsc + group, data2b)
+summary(aov4b)
+rstatix::eta_squared(aov4b)
+metscore_summary2b <- data2b %>%
+  group_by(group) %>%
+  summarise(mean = mean(METscore), sd = sd(METscore))
+
+aov4c <- aov(METscore ~ mathsc + group, data2c)
+summary(aov4c)
+rstatix::eta_squared(aov4c)
+metscore_summary2c <- data2c %>%
+  group_by(group) %>%
+  summarise(mean = mean(METscore), sd = sd(METscore))
+
+aov4d <- aov(METscore ~ mathsc + group, data2d)
+summary(aov4d)
+rstatix::eta_squared(aov4d)
+metscore_summary2d <- data2d %>%
+  group_by(group) %>%
+  summarise(mean = mean(METscore), sd = sd(METscore))
+
+aov4e <- aov(METscore ~ mathsc + group, data2e)
+summary(aov4e)
+rstatix::eta_squared(aov4e)
+metscore_summary2e <- data2e %>%
+  group_by(group) %>%
+  summarise(mean = mean(METscore), sd = sd(METscore))
+apa.aov.table(aov4e)
+effectsize::eta_squared(aov4e, partial = F)
+ci.pvaf(F.value = 2.84, df.1 = 1, df.2 = 497, N = 500, conf.level = .90)
+```
+
+## rt
+```{r}
+met_correct <- subset(all_met_trials, correct == 1)
+mod <- (lmer(rt ~ group + difficulty +  (1|study/subject), met_correct))
+summary(mod)
+
+
+mod1 <- lmer(rt ~ group + difficulty + (difficulty|study/subject ), met_correct)
+summary(mod1)
+icc(mod)
+
+
+ggplot(met_correct, aes(x = difficulty, y = rt, color = group)) + facet_wrap(~study) 
+
+x2 <-met_correct %>% mutate(pre = predict(mod1)) %>%
+  group_by(difficulty, group) %>%
+  summarise(mean = mean(pre))
+
+met_correct %>% mutate(pred = predict(mod1)) %>%
+  group_by(subject, difficulty) %>%
+  summarise(m = mean(pred))
+                         ggplot(aes(x = difficulty, y=pred, color = group)) + facet_grid(~study) + 
+  geom_smooth(method = "lm", aes(colour = group))
+
+
+
+plot_model(mod1, type = "pred", terms = c("difficulty", "group", "study"))
+
+
+#study e
+met_correct_a_simple <- met_correcta %>%
+  group_by(subject, difficulty, group) %>%
+  summarise(rt = mean(rt, na.rm = T))
+
+summary(lm(rt ~ group, met_correct_e_simple[met_correct_e_simple$difficulty ==5 ,]))
+
+
+summary(lm(rt ~ group, data = met_correct_a_simple[met_correct_a_simple$difficulty == 5,]))
+
+
+# model for each study for meta analysis:
+met_correcta <- subset(exp2a_met_trials, correct == 1)
+rt_moda <- (lmer(rt ~ group + difficulty +  (difficulty|subject), met_correcta))
+plot_model(rt_moda, type = "pred", terms = c("difficulty", "group"))
+
+met_correctb <- subset(exp2b_met_trials, correct == 1)
+rt_modb <- (lmer(rt ~ group + difficulty +  (difficulty|subject), met_correctb))
+
+met_correctc<- subset(exp2c_met_trials, correct == 1)
+rt_modc <- lmer(rt ~ group*difficulty +  (difficulty|subject), met_correctc)
+ggplot(met_correctc, aes(x = difficulty, y = rt, color = group)) + geom_smooth(method = "lm")
+
+met_correctd <- subset(exp2d_met_trials, correct == 1)
+rt_modd <- lmer(rt ~ group + difficulty +  (difficulty|subject), met_correctd)
+
+met_correcte <- subset(exp2e_met_trials, correct == 1)
+rt_mode <- (lmer(rt ~ group +difficulty +  (difficulty|subject), met_correcte))
+
+plot_model(rt_mode, type = "pred", terms = c("difficulty", "group"))
+```
+ 
+
+# MET choices across time: graphs
+
+
+```{r}
+
+## 2a
+
+exp2a_table <- exp2a_met_trials%>% 
+  group_by(group, trial) %>%
+  summarise(mean_difficulty = mean(difficulty), sd = sd(difficulty, na.rm = TRUE)) %>%
+  mutate(group = ifelse(group == "1", "contingent reward", "control"))
+
+png(file = "Difficulty_trial2a.png", width = 2800, height = 2400, res = 300)
+ggplot(exp2a_table, aes(x = trial, y = mean_difficulty, color = group)) + 
+  geom_line() +
+  xlab('Trial') +
+  ylab('Difficulty') + theme_minimal() + 
+  theme(axis.text = element_text(size = 10),
+                              axis.title =element_text(size=14),
+                              axis.title.x = element_text(vjust = -4),
+                              axis.title.y = element_text(vjust = 4),
+                              plot.margin = margin(1,1,1,1, "cm")) +
+  scale_colour_brewer(palette = "Set1", direction = 1)
+dev.off()
+
+## 2b
+exp2b_table <- exp2b_met_trials %>% 
+  group_by(group, trial) %>%
+  summarise(mean_difficulty = mean(difficulty), sd = sd(difficulty, na.rm = TRUE)) %>%
+  mutate(group = ifelse(group == "1", "contingent reward", "control"))
+
+png(file = "Difficulty_trial2b.png", width = 2800, height = 2400, res = 300)
+ggplot(exp2b_table, aes(x = trial, y = mean_difficulty, color = group)) + 
+  geom_line() +
+  xlab('Trial') +
+  ylab('Difficulty') + theme_minimal() + 
+  theme(axis.text = element_text(size = 10),
+                              axis.title =element_text(size=14),
+                              axis.title.x = element_text(vjust = -4),
+                              axis.title.y = element_text(vjust = 4),
+                              plot.margin = margin(1,1,1,1, "cm")) +
+  scale_colour_brewer(palette = "Set1", direction = 1)
+dev.off()
+
+## 2c
+exp2c_table <- exp2c_met_trials %>% 
+  group_by(group, trial) %>%
+  summarise(mean_difficulty = mean(difficulty), sd = sd(difficulty, na.rm = TRUE)) %>%
+  mutate(group = ifelse(group == "1", "contingent reward", "control"))
+
+png(file = "Difficulty_trial2c.png", width = 2800, height = 2400, res = 300)
+ggplot(exp2c_table, aes(x = trial, y = mean_difficulty, color = group)) + 
+  geom_line() +
+  xlab('Trial') +
+  ylab('Difficulty') + theme_minimal() + 
+  theme(axis.text = element_text(size = 10),
+                              axis.title =element_text(size=14),
+                              axis.title.x = element_text(vjust = -4),
+                              axis.title.y = element_text(vjust = 4),
+                              plot.margin = margin(1,1,1,1, "cm")) +
+  scale_colour_brewer(palette = "Set1", direction = 1)
+dev.off()
+
+## 2d
+exp2d_table <- exp2d_met_trials %>% 
+  group_by(group, trial) %>%
+  summarise(mean_difficulty = mean(difficulty), sd = sd(difficulty, na.rm = TRUE)) %>%
+  mutate(group = ifelse(group == "1", "contingent reward", "control"))
+
+png(file = "Difficulty_trial2d.png", width = 2800, height = 2400, res = 300)
+ggplot(exp2d_table, aes(x = trial, y = mean_difficulty, color = group)) + 
+  geom_line() +
+  xlab('Trial') +
+  ylab('Difficulty') + theme_minimal() + 
+  theme(axis.text = element_text(size = 10),
+                              axis.title =element_text(size=14),
+                              axis.title.x = element_text(vjust = -4),
+                              axis.title.y = element_text(vjust = 4),
+                              plot.margin = margin(1,1,1,1, "cm")) +
+  scale_colour_brewer(palette = "Set1", direction = 1)
+dev.off()
+
+## 2e
+exp2e_table <- exp2e_met_trials %>% 
+  group_by(group, trial) %>%
+  summarise(mean_difficulty = mean(difficulty), sd = sd(difficulty, na.rm = TRUE)) %>%
+  mutate(group = ifelse(group == "1", "contingent reward", "control"))
+
+ggplot(exp2e_table, aes(x = trial, y = mean_difficulty, color = group)) + 
+  geom_line() +
+  xlab('Trial') +
+  ylab('Difficulty') + theme_minimal() + 
+  theme(axis.text = element_text(size = 10),
+                              axis.title =element_text(size=14),
+                              axis.title.x = element_text(vjust = -4),
+                              axis.title.y = element_text(vjust = 4),
+                              plot.margin = margin(1,1,1,1, "cm")) +
+  scale_colour_brewer(palette = "Set1", direction = 1)
+
+```
+
+```{r}
+#all
+exp2_all_table <- all_met_trials %>% 
+  group_by(group, trial) %>%
+  summarise(mean_difficulty = mean(difficulty), sd = sd(difficulty, na.rm = TRUE)) %>%
+  mutate(group = ifelse(group == "1", "contingent reward", "control"))
+
+
+pdf(file = "figures/figure4.pdf", width = 6, height = 4)
+ggplot(exp2_all_table, aes(x = trial, y = mean_difficulty, color = group)) + 
+  geom_line() +
+  xlab('Trial') +
+  ylab('Difficulty') + theme_minimal() + 
+  theme(axis.text = element_text(size = 10),
+                              axis.title =element_text(size=14),
+                              axis.title.x = element_text(vjust = -4),
+                              axis.title.y = element_text(vjust = 4),
+                              plot.margin = margin(1,1,1,1, "cm")) +
+  scale_colour_brewer(palette = "Set1", direction = 1)
+
+
+dev.off()
+```
+
+
+#Post task questionnaires
+
+
+```{r}
+
+# 2a
+summary(aov(difficulty ~ mathsc + group + nfc, data = data2a))
+rstatix::eta_squared(aov(difficulty ~ mathsc + group:nfc, data = data2a))
+cor.test(data2a$difficulty, data2a$nfc)
+
+#2b
+summary(aov(difficulty ~ mathsc + aof*group, data = data2b))
+summary(aov(difficulty ~ mathsc +  group*aod, data = data2b))
+summary(aov(difficulty ~ mathsc + group*wp, data = data2b))
+
+plot_model(aov(difficulty ~ mathsc + group*wp, data = data2b), type = "pred", terms = c("wp", "group"))
+simple_slopes()
+
+ #2c
+summary(aov(difficulty ~ mathsc + wpbeliefs, data = data2c))
+rstatix::eta_squared(aov(difficulty ~ mathsc + wpbeliefs, data = data2c))
+
+summary(aov(difficulty ~ mathsc + mdbs*group, data = data2c))
+rstatix::eta_squared(aov(difficulty ~ mathsc + mdbs*group, data = data2c))
+
+summary(aov(difficulty ~ mathsc + bps*group, data = data2c))
+rstatix::eta_squared(aov(difficulty ~ mathsc + bps*group, data = data2c))
+
+#Study 2d
+summary(aov(hope_of_success ~ mathsc + group, data = data2d))
+rstatix::partial_eta_squared(aov(hope_of_success ~ mathsc + group, data = data2d))
+
+# Study 2e
+summary(aov(hope_of_success ~ mathsc + group, data = data2e))
+rstatix::eta_squared(aov(hope_of_success ~ mathsc + group, data = data2e))
+
+exp2e_group_hos_summary <- data2e %>%
+  group_by(group) %>%
+  summarise(mean = mean(hope_of_success), sd = sd(hope_of_success))
+
+```
+
+
+# difficulty choice meta analysis
+
+```{r}
+all_exp2_data <- rbind(data2a[,c("subject", "group", "difficulty", "mathsc", "wave", "difficulty_resid", "METraw", "METraw_resid")], 
+           data2b[,c("subject", "group", "difficulty", "mathsc", "wave", "difficulty_resid", "METraw", "METraw_resid")],
+           data2c[,c("subject", "group", "difficulty", "mathsc", "wave", "difficulty_resid", "METraw", "METraw_resid")],
+           data2d[,c("subject", "group", "difficulty", "mathsc", "wave", "difficulty_resid", "METraw", "METraw_resid")],
+           data2e[,c("subject", "group", "difficulty", "mathsc", "wave", "difficulty_resid", "METraw", "METraw_resid")])
+
 meta_df <- setNames(data.frame(matrix(ncol = 7, nrow = 5)), c("g1m", "g1sd", "g1n", "g2m", "g2sd", "g2n", "study")) %>%
   mutate(study = c(1:5))
 
-# fill df with mean and sds:
-for (i in c(1:5)) {
-  
-  meta_df$g1n[i] = length(exp2_data$subject[exp2_data$group == 1 & exp2_data$wave == i]);
-  meta_df$g2n[i] = length(exp2_data$subject[exp2_data$group == 2 & exp2_data$wave == i]);
-  meta_df$g1m[i] = mean(exp2_data$difficulty_resid[exp2_data$group == 1 & exp2_data$wave == i]);
-  meta_df$g2m[i] = mean(exp2_data$difficulty_resid[exp2_data$group == 2 & exp2_data$wave == i]);
-  meta_df$g1sd[i] = sd(exp2_data$difficulty_resid[exp2_data$group == 1 & exp2_data$wave == i]);
-  meta_df$g2sd[i] = sd(exp2_data$difficulty_resid[exp2_data$group == 2 & exp2_data$wave == i]);
+for (i in c(1:5)){
+  meta_df$g1n[i] = length(all_exp2_data$subject[all_exp2_data$group == 1 & all_exp2_data$wave == i]);
+  meta_df$g2n[i] = length(all_exp2_data$subject[all_exp2_data$group == 2 & all_exp2_data$wave == i]);
+  meta_df$g1m[i] = mean(all_exp2_data$difficulty_resid[all_exp2_data$group == 1 & all_exp2_data$wave == i]);
+  meta_df$g2m[i] = mean(all_exp2_data$difficulty_resid[all_exp2_data$group == 2 & all_exp2_data$wave == i]);
+  meta_df$g1sd[i] = sd(all_exp2_data$difficulty_resid[all_exp2_data$group == 1 & all_exp2_data$wave == i]);
+  meta_df$g2sd[i] = sd(all_exp2_data$difficulty_resid[all_exp2_data$group == 2 & all_exp2_data$wave == i]);
 }
 
 # calculate effect sizes
@@ -89,138 +949,203 @@ meta_ef <- esc_mean_sd(grp1m = meta_df$g1m,
 #meta analysis
 
 
-meta <- metagen(meta_ef$es, 
+m <- metagen(meta_ef$es, 
              meta_ef$se, 
              data = meta_ef,
              studlab = paste(c("2a", "2b", "2c","2d", "2e")), 
              comb.fixed = TRUE, 
              comb.random = FALSE,
              prediction = TRUE, sm= "MD")
-meta
+m
 ```
 
-# Difficulty choice across time
+forest plot
+
 ```{r}
-modela <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
-             + (trialpercent|subject), data = met2a, REML = FALSE)
+#png(file = "forestplot.png", width = 2800, height = 2400, res = 300)
 
-modelb <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
-             + (trialpercent|subject), data = met2b, REML = FALSE)
+pdf(file = "figures/figure3.pdf", width = 8, height = 4)
+forest.meta(m,
+            print.tau2 = FALSE,
+            leftlabs = c("Study", "d", "SE"))
 
-modelc <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
-             + (trialpercent|subject), data = met2c, REML = FALSE)
-
-modeld <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
-             + (trialpercent|subject), data = met2d, REML = FALSE)
-
-modele <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
-             + (trialpercent|subject), data = met2e, REML = FALSE)
+dev.off()
 ```
 
-
-# MET difficulty time quadratic interaction meta analysis
+# MET logistic regression meta analyses
 ```{r}
-# Create df for effect sizes
-MET_time_meta_df <- setNames(data.frame(matrix(ncol = 3, nrow = 5)), c("ef", "se", "study")) %>%
+MET_meta_df <- setNames(data.frame(matrix(ncol = 3, nrow = 5)), c("ef", "se", "study")) %>%
   mutate(study = c(1:5))
 
-# Extract effect sizes from models:
-
-efs <- vector()
-models <- list(modela, modelb, modelc, modeld, modele)
-
-efs <- lapply(models, function(x) {
-  summary(x)$coefficients[7] # extract coefficients of quadratic group:trial interaction term
-})
-
-ses <- lapply(models, function(x) {
-  summary(x)$coefficients[14] #extract SEs of these coefficients
-})
-
-for (i in c(1:5)){
-  MET_time_meta_df[i,1] <- efs[[i]]
-  MET_time_meta_df[i,2] <- ses[[i]]
-}
-
-MET_time_meta <- metagen(MET_time_meta_df$ef, 
-             MET_time_meta_df$se, 
-             data = MET_time_meta_df,
-             studlab = paste(c("2a", "2b", "2c","2d", "2e")), 
-             comb.fixed = TRUE, 
-             comb.random = FALSE,
-             prediction = TRUE, sm= "MD")
-MET_time_meta
-
-```
-
-# MET performance
-
-## logistic regression:
-
-```{r}
-m1 <- glmer(correct ~ group + difficulty + (difficulty|subject), 
-            family = binomial("logit"), data = met2a)
-summary(m1)
-
-m2 <- glmer(correct ~ group + difficulty + (difficulty|subject), family = binomial("logit"), data = met2b)
-  summary(m2)
-
-m3 <- glmer(correct ~ group + difficulty + (difficulty|subject), family = binomial("logit"), data = met2c)
-summary(m3)
-
-m4 <- glmer(correct ~ group + difficulty + (difficulty|subject), family = binomial("logit"), data = met2d)
-summary(m4)
-
-m5 <- glmer(correct ~ group+ difficulty + (difficulty|subject), family = binomial("logit"), data = met2e)
-summary(m5)
-```
-
-## meta analysis of group term:
-
-```{r}
-# Create df for effect sizes:
-MET_performance_meta_df <- setNames(data.frame(matrix(ncol = 3, nrow = 5)), c("ef", "se", "study")) %>%
-  mutate(study = c(1:5))
-
-# Extract effect sizes from models:
 efs <- vector()
 models <- list(m1, m2, m3, m4, m5)
-
 efs <- lapply(models, function(x) {
-  summary(x)$coefficients[2] # extract coefficient of group
+  summary(x)$coefficients[2]
 })
 
 ses <- lapply(models, function(x) {
-  summary(x)$coefficients[5] # extract SE of coefficient of group
+  summary(x)$coefficients[5]
 })
 
 for (i in c(1:5)){
-  MET_performance_meta_df[i,1] <- efs[[i]]
-  MET_performance_meta_df[i,2] <- ses[[i]]
+  MET_meta_df[i,1] <- efs[[i]]
+  MET_meta_df[i,2] <- ses[[i]]
 }
 
-MET_performance_meta <- metagen(MET_performance_meta_df$ef, 
-             MET_performance_meta_df$se, 
-             data = MET_performance_meta_df,
+MET_meta <- metagen(MET_meta_df$ef, 
+             MET_meta_df$se, 
+             data = MET_meta_df,
              studlab = paste(c("2a", "2b", "2c","2d", "2e")), 
              comb.fixed = TRUE, 
              comb.random = FALSE,
              prediction = TRUE, sm= "MD")
-MET_performance_meta
+MET_meta
+
+forest.meta(MET_meta,
+            print.tau2 = FALSE)
 ```
-# achievement motivation:
+
+# MET rt group diff meta analysis
 
 ```{r}
-#Study 2d
-summary(aov(hope_of_success ~ mathsc + group, data = data2d))
-rstatix::eta_squared(aov(hope_of_success ~ mathsc + group, data = data2d))
+rt_meta_df <- setNames(data.frame(matrix(ncol = 3, nrow = 5)), c("es", "se", "study")) %>%
+  mutate(study = c(1:5))
 
-# Study 2e
-summary(aov(hope_of_success ~ mathsc + group, data = data2e))
-rstatix::eta_squared(aov(hope_of_success ~ mathsc + group, data = data2e))
+efs <- vector()
+models <- list(rt_moda, rt_modb, rt_modc, rt_modd, rt_mode)
+efs <- lapply(models, function(x) {
+  summary(x)$coefficients[2]
+})
+
+ses <- lapply(models, function(x) {
+  summary(x)$coefficients[5]
+})
+
+for (i in c(1:5)){
+  rt_meta_df[i,1] <- efs[[i]]
+  rt_meta_df[i,2] <- ses[[i]]
+}
+
+MET_meta <- metagen(rt_meta_df$es, 
+             rt_meta_df$se, 
+             data = rt_meta_df,
+             studlab = paste(c("2a", "2b", "2c","2d", "2e")), 
+             comb.fixed = TRUE, 
+             comb.random = TRUE,
+             prediction = TRUE, sm= "MD")
+MET_meta
 
 ```
 
+# MET score meta analysis
+```{r}
+meta_df <- setNames(data.frame(matrix(ncol = 3, nrow = 5)), c("es", "se", "study")) %>%
+  mutate(study = c(1:5))
+
+for (i in c(1:5)){
+  meta_df$g1n[i] = length(all_exp2_data$subject[all_exp2_data$group == 1 & all_exp2_data$wave == i]);
+  meta_df$g2n[i] = length(all_exp2_data$subject[all_exp2_data$group == 2 & all_exp2_data$wave == i]);
+  meta_df$g1m[i] = mean(all_exp2_data$METraw_resid[all_exp2_data$group == 1 & all_exp2_data$wave == i]);
+  meta_df$g2m[i] = mean(all_exp2_data$METraw_resid[all_exp2_data$group == 2 & all_exp2_data$wave == i]);
+  meta_df$g1sd[i] = sd(all_exp2_data$METraw_resid[all_exp2_data$group == 1 & all_exp2_data$wave == i]);
+  meta_df$g2sd[i] = sd(all_exp2_data$METraw_resid[all_exp2_data$group == 2 & all_exp2_data$wave == i]);
+}
+
+# calculate effect sizes
+meta_ef <- esc_mean_sd(grp1m = meta_df$g1m,
+                       grp1sd = meta_df$g1sd,
+                       grp1n = meta_df$g1n,
+                       grp2m = meta_df$g2m,
+                       grp2sd = meta_df$g2sd,
+                       grp2n = meta_df$g2n,
+                       study = meta_df$study) %>% 
+                     as.data.frame()
+
+#meta analysis
 
 
+m <- metagen(meta_ef$es, 
+             meta_ef$se, 
+             data = meta_ef,
+             studlab = paste(c("2a", "2b", "2c","2d", "2e")), 
+             comb.fixed = TRUE, 
+             comb.random = FALSE,
+             prediction = TRUE, sm= "MD")
+m
+```
+
+#correlations
+
+```{r}
+
+# 2a
+cor_matrix2a <- data2a %>% select(age_response, gender_response, mathsc, difficulty, nbackperformance, METraw, nfc) %>%
+  mutate(gender_response = ifelse(gender_response == "Female", 1, 0)) %>%
+  mutate_all(~as.numeric(.)) %>%
+  rename(Age = age_response,
+         Gender = gender_response,
+         `Diff choice` = difficulty,
+         `Math SC` = mathsc,
+         `NFC` = nfc,
+         `N-back perf` = nbackperformance,
+          `MET perf` = METraw
+         )
+
+# 2b
+cor_matrix2b <- data2b %>% select(age, gender, mathsc, difficulty, nbackperformance, METraw, wp, aod, aof,) %>%
+  mutate(gender = ifelse(gender == "Female", 1, 0)) %>%
+  mutate_all(~as.numeric(.))%>%
+  rename(Age = age,
+         Gender = gender,
+         `Diff choice` = difficulty,
+         `Math SC` = mathsc,
+         `N-back perf` = nbackperformance,
+          `MET perf` = METraw,
+         `WP` = wp,
+         `AOF` = aof,
+         `AOD` = aod
+         )
+
+# 2c
+cor_matrix2c <- data2c %>% select(age, gender, mathsc, difficulty, nbackperformance, METraw, wpbeliefs, mdbs, bps) %>%
+  mutate(gender = ifelse(gender == "Female", 1, 0)) %>%
+  mutate_all(~as.numeric(.))%>%
+  rename(Age = age,
+         Gender = gender,
+         `Diff choice` = difficulty,
+         `Math SC` = mathsc,
+         `N-back perf` = nbackperformance,
+          `MET perf` = METraw,
+         `MDBS` = mdbs,
+         `BPS` = bps
+         )
+
+# 2d
+cor_matrix2d <- data2d %>% select(age, gender, mathsc,  difficulty, nbackperformance, METraw, hope_of_success,) %>%
+  mutate(gender = ifelse(gender == "Female", 1, 0)) %>%
+  mutate_all(~as.numeric(.))%>%
+  rename(Age = age,
+         Gender = gender,
+         `Diff choice` = difficulty,
+         `Math SC` = mathsc,
+         `N-back perf` = nbackperformance,
+          `MET perf` = METraw,
+         AMS = hope_of_success
+         )
+
+# 2e
+cor_matrix2e <- data2e %>% select(age_response, gender_response, mathsc, difficulty, nbackperformance, METraw, hope_of_success) %>%
+  mutate(gender_response = ifelse(gender_response == "Female", 1, 0)) %>%
+  mutate_all(~as.numeric(.))%>%
+  rename(Age = age_response,
+         Gender = gender_response,
+         `Diff choice` = difficulty,
+         `Math SC` = mathsc,
+         `N-back perf` = nbackperformance,
+          `MET perf` = METraw,
+         AMS = hope_of_success
+         )
+
+corstars(cor_matrix2d)
+```
 
