@@ -1,6 +1,8 @@
 ---
 title: "Analysis_Exp2"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -31,11 +33,16 @@ data2e <- exp2_data %>%
   filter(wave == 5)
 
 
-met2a <- read.csv("met2a.csv")
-met2b <- read.csv("met2b.csv")
-met2c <- read.csv("met2c.csv")
-met2d <- read.csv("met2d.csv")
-met2e <- read.csv("met2e.csv")
+met2a <- read.csv("met2a.csv") %>%
+  mutate(group = as.factor(group))
+met2b <- read.csv("met2b.csv") %>%
+  mutate(group = as.factor(group))
+met2c <- read.csv("met2c.csv") %>%
+  mutate(group = as.factor(group))
+met2d <- read.csv("met2d.csv") %>%
+  mutate(group = as.factor(group))
+met2e <- read.csv("met2e.csv") %>%
+  mutate(group = as.factor(group))
 
 nback2a <- read.csv("nback2a.csv")
 nback2b <- read.csv("nback2b.csv")
@@ -55,6 +62,8 @@ datasets <- list(data2a, data2b, data2c, data2d, data2e)
 lapply(datasets, function(x){
   summary(aov(difficulty ~ mathsc + group, data = x))})
 
+lapply(datasets, function(x){
+rstatix::eta_squared(aov(difficulty ~ mathsc + group, data = x))})
 ```
 
 # Difficulty choice meta analysis
@@ -107,18 +116,24 @@ modela <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) +
 modelb <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
              + (trialpercent|subject), data = met2b, REML = FALSE)
 
+
 modelc <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
              + (trialpercent|subject), data = met2c, REML = FALSE)
+
 
 modeld <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
              + (trialpercent|subject), data = met2d, REML = FALSE)
 
+
 modele <- lmer(difficulty ~ mathsc + group + poly(trialpercent, 2, raw = TRUE) + poly(trialpercent,2, raw = TRUE):group
              + (trialpercent|subject), data = met2e, REML = FALSE)
+
+
 ```
 
 
 # MET difficulty time quadratic interaction meta analysis
+
 ```{r}
 # Create df for effect sizes
 MET_time_meta_df <- setNames(data.frame(matrix(ncol = 3, nrow = 5)), c("ef", "se", "study")) %>%
@@ -159,19 +174,34 @@ MET_time_meta
 
 ```{r}
 m1 <- glmer(correct ~ group + difficulty + (difficulty|subject), 
-            family = binomial("logit"), data = met2a)
+            family = binomial("logit"), data = met2a,
+            control=glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
 summary(m1)
 
-m2 <- glmer(correct ~ group + difficulty + (difficulty|subject), family = binomial("logit"), data = met2b)
+m2 <- glmer(correct ~ group + difficulty + (difficulty|subject), family = binomial("logit"), data = met2b,
+    control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun =
+                                                                  2e5)))
   summary(m2)
 
-m3 <- glmer(correct ~ group + difficulty + (difficulty|subject), family = binomial("logit"), data = met2c)
+m3 <- glmer(correct ~ group + difficulty + (difficulty|subject), family = binomial("logit"), data = met2c,
+    control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun =
+                                                                  2e5)))
 summary(m3)
 
-m4 <- glmer(correct ~ group + difficulty + (difficulty|subject), family = binomial("logit"), data = met2d)
+m4 <- glmer(correct ~ group + difficulty + (difficulty|subject), family = binomial("logit"), data = met2d,
+    control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun =
+                                                                  2e5)))
 summary(m4)
 
-m5 <- glmer(correct ~ group+ difficulty + (difficulty|subject), family = binomial("logit"), data = met2e)
+m5 <-
+  glmer(
+    correct ~ group + difficulty + (difficulty |
+                                      subject),
+    family = binomial("logit"),
+    data = met2e,
+    control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun =
+                                                                  2e5))
+  )
 summary(m5)
 ```
 
@@ -207,7 +237,9 @@ MET_performance_meta <- metagen(MET_performance_meta_df$ef,
              comb.random = FALSE,
              prediction = TRUE, sm= "MD")
 MET_performance_meta
+
 ```
+
 # achievement motivation:
 
 ```{r}
@@ -220,6 +252,64 @@ summary(aov(hope_of_success ~ mathsc + group, data = data2e))
 rstatix::eta_squared(aov(hope_of_success ~ mathsc + group, data = data2e))
 
 ```
+
+# Reward by group  
+
+```{r}
+
+reward_group <- lapply(datasets, function(x){
+  summary(lm(reward ~ group, data = x))})
+reward_group
+
+```
+
+# N back performance by group
+
+```{r}
+performance_group <- lapply(datasets, function(x){
+  summary(lm(nbackperformance ~ group, data = x))})
+performance_group
+```
+
+
+# Other post task questionnaires
+
+## 2a
+```{r}
+# Need for cognition
+summary(aov(difficulty ~ mathsc + nfc, data = data2a))
+summary(aov(difficulty ~ mathsc + group*nfc, data = data2a))
+```
+
+## 2b 
+
+```{r}
+
+# Action-state orientation
+summary(aov(difficulty ~ mathsc + aof*group, data = data2b))
+summary(aov(difficulty ~ mathsc +  group*aod, data = data2b))
+
+# Willpower beliefs
+summary(aov(difficulty ~ mathsc + group*wp, data = data2b))
+```
+
+## 2c
+
+```{r}
+# willpower beliefs
+summary(aov(difficulty ~ mathsc + group*wp, data = data2c))
+rstatix::eta_squared(aov(difficulty ~ mathsc + group*wp, data = data2c))
+
+# state boredom
+summary(aov(difficulty ~ mathsc + mdbs*group, data = data2c))
+rstatix::eta_squared(aov(difficulty ~ mathsc + mdbs*group, data = data2c))
+
+# trait boredom
+summary(aov(difficulty ~ mathsc + bps*group, data = data2c))
+rstatix::eta_squared(aov(difficulty ~ mathsc + bps*group, data = data2c))
+```
+
+
 
 
 
